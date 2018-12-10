@@ -91,7 +91,7 @@ class Visualizer(object):
 
     def replace_obj_names(self, inp: List) -> List[str]:
         "Converts stuff like [2] to the relevant object name"
-        return [x if isinstance(x, str) else self.obj_list[x[0]]
+        return [x if isinstance(x, str) else ' '.join([self.obj_list[y] for y in x])
                 for x in inp]
 
     def get_answers(self) -> List[str]:
