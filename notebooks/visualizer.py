@@ -64,11 +64,15 @@ class Visualizer(object):
         if draw_mask:
             segms = self.meta_data['segms']
             for ind, seg in enumerate(segms):
-                poly = seg[0]
-                poly_tuple = [tuple(p) for p in poly]
-                color = self.color_list[ind].tolist()
-                drawer.polygon(
-                    poly_tuple, fill=tuple(color + [self.transparency]))
+                # import pdb
+                # pdb.set_trace()
+                for poly in seg:
+                    if len(poly) < 3:
+                        continue
+                    poly_tuple = [tuple(p) for p in poly]
+                    color = self.color_list[ind].tolist()
+                    drawer.polygon(
+                        poly_tuple, fill=tuple(color + [self.transparency]))
 
         if draw_box:
             boxs = self.meta_data['boxes']
