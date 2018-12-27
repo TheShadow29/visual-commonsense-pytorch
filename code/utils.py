@@ -233,13 +233,13 @@ class Learner:
                        t_total=t_total)
         return opt
 
-    def overfit_batch(self):
+    def overfit_batch(self, epochs: int, lr: float):
         "Sanity check to see if model overfits on a batch"
         batch = next(iter(self.data.train_dl))
         for b in batch.keys():
             batch[b] = batch[b].to(self.device)
         self.mdl.train()
-        opt = self.prepare_optimizer()
+        opt = self.prepare_optimizer(epochs, lr)
 
         for i in range(1000):
             opt.zero_grad()

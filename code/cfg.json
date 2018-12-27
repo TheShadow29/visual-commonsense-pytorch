@@ -4,6 +4,12 @@
     "vcr_annots": "annotations",
     "bert_model": "bert-base-uncased",
     "do_lower_case": true,
-    "bs": 50,
-    "nw": 10
+    "lr": 3e-5,
+    "bs": 10,
+    "nw": 0,
+    "epochs": 10,
+    "del_existing": false,
+    "resume": false,
+    "resume_path": "",
+    "load_opt": false
 }

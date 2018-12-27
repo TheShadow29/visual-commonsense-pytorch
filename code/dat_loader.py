@@ -83,6 +83,7 @@ class VCRDataset(Dataset):
                 self.cfg['bert_model'], do_lower_case=self.cfg['do_lower_case'])
             self.preprocess_sents()
         self.sent_data = pickle.load(self.sent_cache_file.open('rb'))
+        logger.info('Loaded sentence data')
 
     def get_ann_from_idx(self, idx):
         return self.csv_data.iloc[idx]
@@ -170,6 +171,7 @@ class VCRDataset(Dataset):
                 input_mask = [1]*len(input_ids)
 
                 padding = [0] * (self.max_seq_len - len(input_ids))
+                tot_len = len(input_mask)
                 input_ids += padding
                 input_mask += padding
                 segment_ids += padding
@@ -182,7 +184,8 @@ class VCRDataset(Dataset):
                     pdb.set_trace()
                 choice_feats.append({'input_ids': input_ids,
                                      'input_mask': input_mask,
-                                     'segment_ids': segment_ids})
+                                     'segment_ids': segment_ids,
+                                     'tot_len': tot_len})
 
             features.append(InputFeatures(example_id=idx,
                                           choice_feats=choice_feats, label=ans_label))
@@ -201,6 +204,8 @@ class VCRDataset(Dataset):
             train_features, 'segment_ids'), dtype=torch.long)
         all_label = torch.tensor(
             [f.label for f in train_features], dtype=torch.long)
+        # tot_len =
+        """"NEED TO FILL THE TOT LEN"""
         return TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label)
 
     def __getitem__(self, idx):
@@ -223,6 +228,14 @@ class VCRDataset(Dataset):
 def bert_collater(batch):
     "Collater for simple bert"
     out_dict = {}
+    import pdb
+    pdb.set_trace()
+    out_lens = [b[1].sum() for b in batch]
+    max_inp_len = max(out_lens)
+    for ind in range(len(batch)):
+        for i in range(4):
+            batch[ind][i] = batch[ind][i][:max_inp_len]
+
     out_dict['input_ids'] = torch.stack([b[0] for b in batch])
     out_dict['input_mask'] = torch.stack([b[1] for b in batch])
     out_dict['segment_ids'] = torch.stack([b[2] for b in batch])

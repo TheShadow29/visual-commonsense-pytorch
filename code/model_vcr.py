@@ -67,6 +67,18 @@ class EvalB(nn.Module):
         return (targ == pred_labels).float().mean()
 
 
+def get_bert_model(cfg):
+    return VCRBert.from_pretrained(cfg['bert_model'], cfg=cfg)
+
+
+def get_loss(cfg):
+    return LossB(cfg)
+
+
+def get_evalfn(cfg):
+    return EvalB(cfg)
+
+
 if __name__ == '__main__':
     cfg = json.load(open('./cfg.json'))
     data = get_bert_data(cfg)
