@@ -221,8 +221,7 @@ class VCRDataset(Dataset):
 
 
 def bert_collater(batch):
-    import pdb
-    pdb.set_trace()
+    "Collater for simple bert"
     out_dict = {}
     out_dict['input_ids'] = torch.stack([b[0] for b in batch])
     out_dict['input_mask'] = torch.stack([b[1] for b in batch])
