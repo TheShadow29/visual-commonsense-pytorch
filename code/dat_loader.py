@@ -220,6 +220,17 @@ class VCRDataset(Dataset):
         return out_dict
 
 
+def bert_collater(batch):
+    import pdb
+    pdb.set_trace()
+    out_dict = {}
+    out_dict['input_ids'] = torch.stack([b[0] for b in batch])
+    out_dict['input_mask'] = torch.stack([b[1] for b in batch])
+    out_dict['segment_ids'] = torch.stack([b[2] for b in batch])
+    out_dict['target_labels'] = torch.stack([b[3] for b in batch])
+    return out_dict
+
+
 def get_vcr_dataset(cfg, set_type='train'):
     vcr_tdir = Path(cfg['vcr_tdir'])
     trn_file = vcr_tdir / cfg['vcr_annots'] / f'{set_type}_vcr.pkl'
@@ -237,10 +248,10 @@ def get_bert_data(cfg):
 
     train_ds = get_bert_dataset(cfg, 'train')
     train_dl = DataLoader(train_ds, batch_size=bs,
-                          shuffle=True, num_workers=nw, drop_last=True)
+                          shuffle=True, num_workers=nw, drop_last=True, collate_fn=bert_collater)
     valid_ds = get_bert_dataset(cfg, 'val')
     valid_dl = DataLoader(valid_ds, batch_size=bs,
-                          shuffle=False, num_workers=nw, drop_last=False)
+                          shuffle=False, num_workers=nw, drop_last=False, collate_fn=bert_collater)
     path = Path('./tmp')
     data_bert = DataWrap(path=path, train_dl=train_dl, valid_dl=valid_dl)
     return data_bert
