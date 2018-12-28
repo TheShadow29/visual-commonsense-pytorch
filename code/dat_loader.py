@@ -204,9 +204,9 @@ class VCRDataset(Dataset):
             train_features, 'segment_ids'), dtype=torch.long)
         all_label = torch.tensor(
             [f.label for f in train_features], dtype=torch.long)
-        # tot_len =
-        """"NEED TO FILL THE TOT LEN"""
-        return TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label)
+        tot_len = torch.tensor(select_field(
+            train_features, 'tot_len'), dtype=torch.long)
+        return TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label, tot_len)
 
     def __getitem__(self, idx):
         ann = self.get_ann_from_idx(idx)
@@ -228,18 +228,18 @@ class VCRDataset(Dataset):
 def bert_collater(batch):
     "Collater for simple bert"
     out_dict = {}
-    import pdb
-    pdb.set_trace()
-    out_lens = [b[1].sum() for b in batch]
+    out_lens = [b[4].max() for b in batch]
     max_inp_len = max(out_lens)
     for ind in range(len(batch)):
-        for i in range(4):
-            batch[ind][i] = batch[ind][i][:max_inp_len]
+        batch[ind] = list(batch[ind])
+        for i in range(3):
+            batch[ind][i] = batch[ind][i][:, :max_inp_len]
 
     out_dict['input_ids'] = torch.stack([b[0] for b in batch])
     out_dict['input_mask'] = torch.stack([b[1] for b in batch])
     out_dict['segment_ids'] = torch.stack([b[2] for b in batch])
     out_dict['target_labels'] = torch.stack([b[3] for b in batch])
+    out_dict['tot_len'] = torch.stack([b[4] for b in batch])
     return out_dict
 
 
