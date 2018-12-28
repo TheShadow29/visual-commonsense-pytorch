@@ -225,11 +225,14 @@ class VCRDataset(Dataset):
         return out_dict
 
 
+max_seq_len = 50
+
+
 def bert_collater(batch):
     "Collater for simple bert"
     out_dict = {}
     out_lens = [b[4].max() for b in batch]
-    max_inp_len = max(out_lens)
+    max_inp_len = min(max(out_lens), max_seq_len)
     for ind in range(len(batch)):
         batch[ind] = list(batch[ind])
         for i in range(3):
