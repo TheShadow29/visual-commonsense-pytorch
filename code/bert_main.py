@@ -38,8 +38,8 @@ def main(uid, **kwargs):
                     eval_fn=eval_fn, device=device, cfg=cfg)
     epochs = cfg['epochs']
     lr = cfg['lr']
-    learn.overfit_batch(epochs, lr)
-    # learn.fit(epochs=epochs, lr=cfg['lr'])
+    # learn.overfit_batch(epochs, lr)
+    learn.fit(epochs=epochs, lr=lr)
 
 
 if __name__ == '__main__':
