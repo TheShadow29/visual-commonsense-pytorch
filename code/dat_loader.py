@@ -282,7 +282,7 @@ class VCRDataset(Dataset):
         return out_dict
 
 
-max_seq_len = 50
+max_seq_len = 70
 
 
 def bert_collater(batch):
