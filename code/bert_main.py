@@ -40,7 +40,8 @@ def main(uid, **kwargs):
     lr = cfg['lr']
     # learn.overfit_batch(epochs, lr)
     learn.fit(epochs=epochs, lr=lr)
+    return learn
 
 
 if __name__ == '__main__':
-    fire.Fire(main)
+    learn = fire.Fire(main)

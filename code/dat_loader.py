@@ -61,9 +61,9 @@ class VCRDataset(Dataset):
         self.vcr_imgs = self.vcr_tdir / self.cfg['vcr_imgs']
         self.vcr_annots = self.vcr_tdir / self.cfg['vcr_annots']
         self.csv_file = Path(self.csv_file)
+        self.task_type = self.cfg['task_type']
         self.sent_cache_file = self.vcr_annots / \
-            f'{self.csv_file.stem}_sent_feats.pkl'
-        self.max_seq_len = 200
+            f'{self.csv_file.stem}_sent_feats_{self.task_type}.pkl'
         # Prepare csv file if it doesn't exist
         if not self.csv_file.exists():
             logger.info('Converting jsonl files to pickle format')
@@ -81,7 +81,14 @@ class VCRDataset(Dataset):
             logger.info('Preprocessing the sentence features')
             self.tokenizer = BertTokenizer.from_pretrained(
                 self.cfg['bert_model'], do_lower_case=self.cfg['do_lower_case'])
-            self.preprocess_sents()
+            if self.task_type == 'QA':
+                self.max_seq_len = 200
+                self.preprocess_sents_QA()
+            elif self.task_type == 'QA_R':
+                self.max_seq_len = 400
+                self.preprocess_sents_QA_R()
+            elif self.task_type == 'Q_AR':
+                self.preprocess_sents_Q_AR()
         self.sent_data = pickle.load(self.sent_cache_file.open('rb'))
         logger.info('Loaded sentence data')
 
@@ -147,7 +154,7 @@ class VCRDataset(Dataset):
         out_dict['rationale_label'] = ann['rationale_label']
         return out_dict
 
-    def preprocess_sents(self):
+    def preprocess_sents_QA(self):
         """
         Preprocess sentences. Currently only QA
         """
@@ -189,6 +196,56 @@ class VCRDataset(Dataset):
 
             features.append(InputFeatures(example_id=idx,
                                           choice_feats=choice_feats, label=ans_label))
+
+        with self.sent_cache_file.open('wb') as f:
+            pickle.dump(features, f)
+
+    def preprocess_sents_QA_R(self):
+        """
+        Preprocess sentences. For QA -> R
+        """
+        features = []
+        for idx in tqdm(range(len(self.csv_data))):
+            ann = self.get_ann_from_idx(idx)
+            obj_dict, obj_list = self.create_obj_counter(ann)
+            qar = self.get_QAR(ann, obj_list)
+            qu = qar['question']
+            ans = qar['answer_choices']
+            ans_label = qar['answer_label']
+            corr_ans = ans[ans_label]
+            rat = qar['rationale_choices']
+            rat_label = qar['rationale_label']
+            final_qa = qu + corr_ans
+            qu_toks = self.tokenizer.tokenize(final_qa)
+            choice_feats = []
+            for rat_choice in rat:
+                rat_choice_toks = self.tokenizer.tokenize(rat_choice)
+                tokens = ["[CLS]"] + qu_toks + \
+                    ["[SEP]"] + rat_choice_toks + ["[SEP]"]
+                segment_ids = [0] * (len(qu_toks) + 2) +\
+                    [1] * (len(rat_choice_toks) + 1)
+                input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+                input_mask = [1]*len(input_ids)
+
+                padding = [0] * (self.max_seq_len - len(input_ids))
+                tot_len = len(input_mask)
+                input_ids += padding
+                input_mask += padding
+                segment_ids += padding
+                try:
+                    assert len(input_ids) == self.max_seq_len
+                    assert len(input_mask) == self.max_seq_len
+                    assert len(segment_ids) == self.max_seq_len
+                except:
+                    import pdb
+                    pdb.set_trace()
+                choice_feats.append({'input_ids': input_ids,
+                                     'input_mask': input_mask,
+                                     'segment_ids': segment_ids,
+                                     'tot_len': tot_len})
+
+            features.append(InputFeatures(example_id=idx,
+                                          choice_feats=choice_feats, label=rat_label))
 
         with self.sent_cache_file.open('wb') as f:
             pickle.dump(features, f)
@@ -267,8 +324,12 @@ def get_bert_data(cfg):
     valid_ds = get_bert_dataset(cfg, 'val')
     valid_dl = DataLoader(valid_ds, batch_size=bs,
                           shuffle=False, num_workers=nw, drop_last=False, collate_fn=bert_collater)
+    # test_ds = get_bert_dataset(cfg, 'test')
+    # test_dl = DataLoader(test_ds, batch_size=bs,
+    #                      shuffle=False, num_workers=nw, drop_last=False, collate_fn=bert_collater)
     path = Path('./tmp')
-    data_bert = DataWrap(path=path, train_dl=train_dl, valid_dl=valid_dl)
+    data_bert = DataWrap(path=path, train_dl=train_dl,
+                         valid_dl=valid_dl)
     return data_bert
     # test_ds = get_bert_dataset(cfg, 'test')
 

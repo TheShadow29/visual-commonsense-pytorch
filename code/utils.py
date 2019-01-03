@@ -99,14 +99,16 @@ class Learner:
         with self.log_file.open('a') as f:
             f.write(towrite + '\n')
 
-    def validate(self, mb: MasterBar) -> List[torch.tensor]:
+    def validate(self, mb: MasterBar, db: Optional[DataLoader] = None) -> List[torch.tensor]:
         "Validation loop, done after every epoch"
         self.mdl.eval()
+        if db is None:
+            db = self.data.valid_dl
         with torch.no_grad():
             val_losses = []
             eval_metrics = []
             nums = []
-            for batch in progress_bar(self.data.valid_dl, parent=mb):
+            for batch in progress_bar(db, parent=mb):
                 for b in batch.keys():
                     batch[b] = batch[b].to(self.device)
                 out = self.mdl(batch)
@@ -155,6 +157,7 @@ class Learner:
         else:
             try:
                 checkpoint = torch.load(open(resume_path, 'rb'))
+                logger.info(f'Loaded model from {resume_path} Correctly')
             except Exception as e:
                 logger.error(
                     f'Some problem with resume path: {resume_path}. Exception raised {e}')
