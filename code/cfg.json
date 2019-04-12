@@ -4,6 +4,7 @@
     "vcr_annots": "annotations",
     "bert_model": "bert-base-uncased",
     "do_lower_case": true,
+    "train_pooler": false,
     "task_type": "QA_R",
     "lr": 3e-5,
     "bs": 20,

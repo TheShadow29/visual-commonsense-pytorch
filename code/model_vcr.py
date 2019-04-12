@@ -5,13 +5,14 @@ from torch import nn
 from torch.nn import functional as F
 import numpy as np
 from dataclasses import dataclass
-from pytorch_pretrained_bert.modeling import PreTrainedBertModel, BertConfig, BertModel, BertPooler
+from pytorch_pretrained_bert.modeling import BertConfig, BertModel, BertPooler
 from pytorch_pretrained_bert.modeling import BertEmbeddings, BertEncoder, BertForMultipleChoice
+from pytorch_pretrained_bert.modeling import BertPreTrainedModel
 from typing import List, Dict, Union, Any, Optional
 from dat_loader import get_bert_data, InputFeatures
 
 
-class VCRBert(PreTrainedBertModel):
+class VCRBert(BertPreTrainedModel):
     def __init__(self, bert_cfg: BertConfig, cfg: Optional[Dict[str, Any]] = None):
         self.bert_cfg = bert_cfg
         super().__init__(bert_cfg)

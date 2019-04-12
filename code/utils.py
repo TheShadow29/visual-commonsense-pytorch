@@ -182,6 +182,7 @@ class Learner:
         self.optimizer = self.prepare_optimizer(epochs, lr)
         # self.optimizer = self.opt_fn(lr=lr)
         # Loop over epochs
+        logger.info(self.cfg)
         mb.write(self.log_keys, table=True)
         exception = False
         st_time = time.time()
@@ -219,7 +220,9 @@ class Learner:
 
         # hack to remove pooler, which is not used
         # thus it produce None grad that break apex
-        param_optimizer = [n for n in param_optimizer if 'pooler' not in n[0]]
+        if not self.cfg['train_pooler']:
+            param_optimizer = [
+                n for n in param_optimizer if 'pooler' not in n[0]]
 
         no_decay = set(['bias', 'LayerNorm.bias', 'LayerNorm.weight'])
         optimizer_grouped_parameters = [
